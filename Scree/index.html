@@ -1,0 +1,126 @@
+<html>
+	<head>
+		<title></title>
+		<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+		<style>
+			ul {
+				list-style-type: none;
+			}
+
+			ul li {
+				display: inline;
+			}
+
+			h1,h3 {
+				text-align: center;
+			}
+
+		</style>
+
+	</head>
+	<body>
+		
+		<ul>
+			<li><a href="../Scatterplot">Bivariate scatterplot</a></li>
+			<li>|</li>
+			<li><a href="../Correlation">Correlation matrix</a></li>
+			<li>|</li>
+			<li><a href="../Scatterplot_matrix">Scatterplot matrix</a></li>
+			<li>|</li>
+			<li><a href="../Parallel">Parallel Coordinates display</a></li>
+			<li>|</li>
+			<li><a href="../PCA">PCA plot</a></li>
+			<li>|</li>
+			<li><a href="../Scree">Scree plot</a></li>
+			<li>|</li>
+			<li><a href="../Biplot">Biplot</a></li>
+			<li>|</li>
+			<li><a href="../MDS_data">MDS display of data</a></li>
+			<li>|</li>
+			<li><a href="../MDS_attributes">MDS display of attributes</a></li>
+		</ul>
+		<hr>
+		<div></div>
+
+		<script>
+			//Dimensions of the graph
+			var height = 500; 
+			var width = 1500;
+
+			//Height margin for graph from the top of the screen
+			var heightMargin = 100;
+			//Dimensions of the canvas
+			var canvasHeight = height + heightMargin + 200;
+			var canvasWidth = width + 50;
+
+			//Used internally as global variables
+			var data_array; 
+			var texts;
+			var tempColor;
+
+			//Used to scale the heights so that they do not go off screen
+			var heightScale;
+			var colorScale;
+			var axisScale;
+
+			//The canvas where the bar chart is drawn
+			var canvas = d3.select("div").append("svg")
+										.attr("width",canvasWidth)
+										.attr("height",canvasHeight);
+
+			//Read in the csv as a text, and then parse into a 2d array
+			d3.csv("explained variances.csv", function(data){
+				data_array = data.columns;
+				draw_scree_plot(); //Draw the barchart
+			});
+
+			//Draws the histogram for the attribute attributes[column_num]
+			function draw_scree_plot(){
+				
+				for(var i = 0; i < data_array.length;i++){
+					data_array[i] = parseFloat(data_array[i]);
+				}
+				var barWidth = 40;
+
+				//Generate the scales
+				heightScale = d3.scaleLinear().domain([0,1]).range([0,height]); //Scale height to screen
+				axisScale = d3.scaleLinear().domain([0,1]).range([height,0]);
+
+
+				//Create ordinal scales to use for axes
+				var plotScale =  d3.scaleOrdinal().domain(["","A","B","C","D","E","F", "G","H","I","J",""]).range([15,75,135,195,255,315,375,435,505,565,625,690]);
+				var topScale = d3.scaleOrdinal().domain(["","","","","","", "","","",""]).range([15,90,165,240,315,390,465,540,615,690]);
+
+				//Clear the existing histogram, create a new one
+				canvas.selectAll("g").remove();
+				canvas.selectAll("text").remove();
+				var bar_group = canvas.append("g");
+
+				//Make the title
+				var title = canvas.append("text")
+									.text("Scree plot") //Pop off the column header and make it the title
+									.attr("class","title") 
+									.attr("x",450)
+									.attr("y",50);
+
+
+				//Create the bar chart bars
+				var bars = 	bar_group.selectAll("rect").data(data_array).enter().append("rect")
+							.attr("width",barWidth)
+							.attr("height",function(d){	if(!isNaN(d)) return heightScale(d);
+														else return 0;})
+							.attr("x",function(d,i){return (barWidth+20)*i + 175;})
+							.attr("y",function(d){if(!isNaN(d)) return height - heightScale(d)+heightMargin;
+														else return 0;})
+							.attr("fill",function(d){return "blue";});
+
+				//Add axes
+				var axis_bottom = canvas.append("g").attr("transform","translate(120,"+(height+heightMargin)+")").call(d3.axisBottom(plotScale)).selectAll('text').style("text-anchor","end").attr("dx","-1em").attr("dy","-0.5em").attr("transform","rotate(-90)");
+	    		var axis_left = canvas.append("g").attr("transform","translate(135,"+heightMargin+")").call(d3.axisLeft(axisScale));
+	    		var axis_top = canvas.append("g").attr("transform","translate(120,"+(heightMargin)+")").call(d3.axisTop(topScale)).selectAll('text').style("text-anchor","end").attr("dx","-1em").attr("dy","0.5em").attr("transform","rotate(90)");
+	    		var axis_right = canvas.append("g").attr("transform","translate("+810+","+heightMargin+")").call(d3.axisRight(axisScale));
+
+				}
+		</script>
+	</body>
+</html>

@@ -1,0 +1,116 @@
+<html>
+	<head>
+		<title>PCA Plot</title>
+		<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+		<style>
+			ul {
+				list-style-type: none;
+			}
+
+			ul li {
+				display: inline;
+			}
+
+			h1,h3 {
+				text-align: center;
+			}
+
+		</style>
+
+	</head>
+	<body>
+		<ul>
+			<li><a href="../Scatterplot">Bivariate scatterplot</a></li>
+			<li>|</li>
+			<li><a href="../Correlation">Correlation matrix</a></li>
+			<li>|</li>
+			<li><a href="../Scatterplot_matrix">Scatterplot matrix</a></li>
+			<li>|</li>
+			<li><a href="../Parallel">Parallel Coordinates display</a></li>
+			<li>|</li>
+			<li><a href="../PCA">PCA plot</a></li>
+			<li>|</li>
+			<li><a href="../Scree">Scree plot</a></li>
+			<li>|</li>
+			<li><a href="../Biplot">Biplot</a></li>
+			<li>|</li>
+			<li><a href="../MDS_data">MDS display of data</a></li>
+			<li>|</li>
+			<li><a href="../MDS_attributes">MDS display of attributes</a></li>
+		</ul>
+		<hr>
+		<div></div>
+		<script>	
+			//Stores csv data
+			var data_array;
+
+			var axis_1 = 0;
+			var axis_2 = 1;
+
+			//Canvas dimensions
+			var canvasWidth = 1000;
+			var canvasHeight = 800;
+
+			//Plot dimensions
+			var plotWidth = 800;
+			var plotHeight = 600;
+
+			//Create the canvas for the scatterplot
+			var canvas = d3.select("div").append("svg")
+									.attr("width",canvasWidth)
+									.attr("height",canvasHeight);
+			
+			//Load CSV into 2D array
+			d3.text("components.csv", function(data){
+				data_array = d3.csvParseRows(data);
+				data_array = d3.transpose(data_array); //Transpose to make data easier to work with
+
+				//Correct data strings to numbers
+				for(var i = 0;i < data_array.length;i++){
+					for(var j = 0;j < data_array[i].length;j++){
+						data_array[i][j] = +data_array[i][j];
+					}
+				}
+
+				draw_pcaplot();
+			});
+
+			function draw_pcaplot(){
+
+				//Load in the selected columns
+				var data_array_one = data_array[axis_1];
+				var data_array_two = data_array[axis_2];
+
+				//Create scales for axes ticks
+				var axis_one_scale = d3.scaleLinear().domain(d3.extent(data_array_one)).range([(canvasWidth - plotWidth)/2,plotWidth]);
+				var axis_two_scale = d3.scaleLinear().domain(d3.extent(data_array_two)).range([plotHeight,(canvasHeight - plotHeight)/2]);
+
+				//Clear old scatterplot
+				canvas.selectAll("circle").remove();
+				canvas.selectAll("g").remove();
+
+				//Make the title
+				var title = canvas.append("text")
+									.text("PCA plot") //Pop off the column header and make it the title
+									.attr("class","title") 
+									.attr("x",450)
+									.attr("y",50);
+
+				//Plot the scatterplot points to coordinates
+				var plot_points = canvas.selectAll("circle").data(data_array_one).enter()
+										.append("circle")
+										.attr("cx",function (d) { return axis_one_scale(d);})
+										.attr("cy",function (d,i) { return axis_two_scale(data_array_two[i]);})
+										.attr("r",2)
+										.attr("fill","blue");
+
+				//Add axes
+				var axis_bottom = canvas.append("g").attr("transform","translate(0,"+plotHeight+")").call(d3.axisBottom(axis_one_scale)).selectAll('text').style("text-anchor","end").attr("dx","-1em").attr("dy","-0.5em").attr("transform","rotate(-90)");
+	    		var axis_left = canvas.append("g").attr("transform","translate(100,0)").call(d3.axisLeft(axis_two_scale));
+
+
+			};
+
+		</script>
+	</body>
+</html>
